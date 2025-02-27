@@ -7,6 +7,9 @@ import com.cogent.TweetApp.repository.TweetRepository;
 import com.cogent.TweetApp.repository.UserRepository;
 import com.cogent.TweetApp.service.TweetService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +22,9 @@ public class TweetServiceImpl implements TweetService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     private User retrieveByUsername(String username) {
         return userRepository
@@ -44,6 +50,13 @@ public class TweetServiceImpl implements TweetService {
         }
     }
 
+    private void checkUserHasAccess(String username) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication != null && authentication.isAuthenticated() && authentication.getName().equals(username))) {
+            throw new RuntimeException("user has no access to this resource");
+        }
+    }
+
     @Override
     public List<Tweet> getAllTweets() {
         return tweetRepository.findAll();
@@ -57,6 +70,7 @@ public class TweetServiceImpl implements TweetService {
 
     @Override
     public Tweet postTweet(String username, Tweet newTweet) {
+        checkUserHasAccess(username);
         User user = retrieveByUsername(username);
         newTweet.setUser(user);
         return tweetRepository.save(newTweet);
@@ -69,7 +83,7 @@ public class TweetServiceImpl implements TweetService {
 
     @Override
     public void deleteTweet(String username, Long tweetId) {
-        confirmUserExists(username);
+        checkUserHasAccess(username);
         Tweet tweet = retrieveByTweetId(tweetId);
         if(!tweet.getUser().getUsername().equals(username)) {
             throw new RuntimeException("tweet " + tweetId + " does not belong to " + username);
@@ -79,6 +93,7 @@ public class TweetServiceImpl implements TweetService {
 
     @Override
     public Tweet likeTweet(String username, Long tweetId) {
+        checkUserHasAccess(username);
         User user = retrieveByUsername(username);
         Tweet tweet = retrieveByTweetId(tweetId);
         tweet.getLikes().add(user);
@@ -89,6 +104,14 @@ public class TweetServiceImpl implements TweetService {
 
     @Override
     public Tweet replyToTweet(String username, Long tweetId, Tweet newTweet) {
-        return null;
+        checkUserHasAccess(username);
+        User user = retrieveByUsername(username);
+        newTweet.setUser(user);
+        Tweet targetTweet = retrieveByTweetId(tweetId);
+        targetTweet.getReplies().add(newTweet);
+        newTweet.setParentTweet(targetTweet);
+        tweetRepository.save(targetTweet);
+        tweetRepository.save(newTweet);
+        return newTweet;
     }
 }

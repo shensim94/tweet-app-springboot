@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -33,6 +32,13 @@ public class Tweet {
     @ManyToMany(mappedBy = "likedTweets")
     @JsonIgnore
     private Set<User> likes = new HashSet<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Tweet parentTweet;
+
+    @OneToMany(mappedBy = "parentTweet")
+    private Set<Tweet> replies = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -64,5 +70,21 @@ public class Tweet {
 
     public void setLikes(Set<User> likes) {
         this.likes = likes;
+    }
+
+    public Tweet getParentTweet() {
+        return parentTweet;
+    }
+
+    public void setParentTweet(Tweet parentTweet) {
+        this.parentTweet = parentTweet;
+    }
+
+    public Set<Tweet> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(Set<Tweet> replies) {
+        this.replies = replies;
     }
 }

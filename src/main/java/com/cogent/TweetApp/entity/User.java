@@ -1,5 +1,6 @@
 package com.cogent.TweetApp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
@@ -28,10 +29,12 @@ public class User {
 
     @NotEmpty(message = "password is required")
     @Size(min = 8, message = "password should contain at least 8 characters")
+    @JsonIgnore
     private String password;
 
     @NotEmpty(message = "email is required")
     @Email
+    @JsonIgnore
     private String email;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
@@ -57,6 +60,7 @@ public class User {
                     referencedColumnName = "id"
             )
     )
+    @JsonIgnore
     private Set<Role> roles;
 
     public Long getId() {
