@@ -1,14 +1,17 @@
 package com.cogent.TweetApp.service.impl;
 
+import com.cogent.TweetApp.Security.JwtTokenProvider;
 import com.cogent.TweetApp.entity.Role;
 import com.cogent.TweetApp.entity.User;
-import com.cogent.TweetApp.payload.LoginDto;
-import com.cogent.TweetApp.payload.RegisterDto;
+import com.cogent.TweetApp.exception.ResourceNotFoundException;
+import com.cogent.TweetApp.payload.AccessToken;
+import com.cogent.TweetApp.payload.LoginDTO;
+import com.cogent.TweetApp.payload.Message;
+import com.cogent.TweetApp.payload.RegisterDTO;
 import com.cogent.TweetApp.repository.RoleRepository;
 import com.cogent.TweetApp.repository.UserRepository;
 import com.cogent.TweetApp.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,8 +38,18 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
+
+    private User retrieveByUsername(String username) {
+        return userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+    }
+
     @Override
-    public String registerUser(RegisterDto registerDto) {
+    public Message registerUser(RegisterDTO registerDto) {
         // check for username exists in database
         if(userRepository.existsByUsername(registerDto.getUsername())) {
             throw new RuntimeException("Username is already taken!");
@@ -58,18 +71,18 @@ public class AuthServiceImpl implements AuthService {
         roles.add(userRole);
         user.setRoles(roles);
         userRepository.save(user);
-        return "User successfully registered";
+        return new Message("User successfully registered");
     }
 
     @Override
-    public String login(LoginDto loginDto) {
-
+    public AccessToken login(LoginDTO loginDto) {
+        System.out.println("Hello from login service");
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.getUsernameOrEmail(), loginDto.getPassword())
         );
         System.out.println("is authenticated: " + authentication.isAuthenticated());
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return "Login successful!";
+        return new AccessToken(jwtTokenProvider.generateToken(authentication));
     }
 
     @Override
@@ -80,5 +93,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public User searchUsername(String username) {
         return null;
+    }
+
+    @Override
+    public User getUserByUsername(String username) {
+        return retrieveByUsername(username);
     }
 }

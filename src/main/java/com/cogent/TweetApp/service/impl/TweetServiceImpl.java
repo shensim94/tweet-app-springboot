@@ -7,11 +7,14 @@ import com.cogent.TweetApp.repository.TweetRepository;
 import com.cogent.TweetApp.repository.UserRepository;
 import com.cogent.TweetApp.service.TweetService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -25,6 +28,7 @@ public class TweetServiceImpl implements TweetService {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
 
     private User retrieveByUsername(String username) {
         return userRepository
@@ -58,14 +62,25 @@ public class TweetServiceImpl implements TweetService {
     }
 
     @Override
-    public List<Tweet> getAllTweets() {
-        return tweetRepository.findAll();
+    public Page<Tweet> getAllTweets(Pageable pageable) {
+
+        return tweetRepository.findAll(pageable);
     }
 
     @Override
-    public List<Tweet> getAllTweetsByUser(String username) {
+    public Page<Tweet> getAllTweetsByUser(String username, Pageable pageable) {
         User user = retrieveByUsername(username);
-        return tweetRepository.findByUserId(user.getId());
+        return tweetRepository.findByUserId(user.getId(), pageable);
+    }
+
+    @Override
+    public Page<Tweet> getAllReplyTweets(Long tweetId, Pageable pageable) {
+        return tweetRepository.findByParentTweetId(tweetId, pageable);
+    }
+
+    @Override
+    public Tweet getTweetById(Long tweetId) {
+        return retrieveByTweetId(tweetId);
     }
 
     @Override
@@ -73,6 +88,7 @@ public class TweetServiceImpl implements TweetService {
         checkUserHasAccess(username);
         User user = retrieveByUsername(username);
         newTweet.setUser(user);
+        newTweet.setCreatedAt(LocalDateTime.now());
         return tweetRepository.save(newTweet);
     }
 
@@ -97,6 +113,7 @@ public class TweetServiceImpl implements TweetService {
         User user = retrieveByUsername(username);
         Tweet tweet = retrieveByTweetId(tweetId);
         tweet.getLikes().add(user);
+        tweet.setLikeCount(tweet.getLikeCount()+1);
         user.getLikedTweets().add(tweet);
         userRepository.save(user);
         return tweetRepository.save(tweet);
@@ -107,8 +124,10 @@ public class TweetServiceImpl implements TweetService {
         checkUserHasAccess(username);
         User user = retrieveByUsername(username);
         newTweet.setUser(user);
+        newTweet.setCreatedAt(LocalDateTime.now());
         Tweet targetTweet = retrieveByTweetId(tweetId);
         targetTweet.getReplies().add(newTweet);
+        targetTweet.setReplyCount(targetTweet.getReplyCount()+1);
         newTweet.setParentTweet(targetTweet);
         tweetRepository.save(targetTweet);
         tweetRepository.save(newTweet);

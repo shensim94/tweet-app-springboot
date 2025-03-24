@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,19 +27,38 @@ public class Tweet {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnore
     private User user;
 
     @ManyToMany(mappedBy = "likedTweets")
-    @JsonIgnore
     private Set<User> likes = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
     private Tweet parentTweet;
 
     @OneToMany(mappedBy = "parentTweet")
     private Set<Tweet> replies = new HashSet<>();
+
+    private LocalDateTime createdAt;
+
+    private int likeCount;
+
+    private int replyCount;
+
+    public int getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public int getReplyCount() {
+        return replyCount;
+    }
+
+    public void setReplyCount(int replyCount) {
+        this.replyCount = replyCount;
+    }
 
     public Long getId() {
         return id;
@@ -86,5 +106,13 @@ public class Tweet {
 
     public void setReplies(Set<Tweet> replies) {
         this.replies = replies;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

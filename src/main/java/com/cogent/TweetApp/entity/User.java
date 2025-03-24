@@ -29,18 +29,16 @@ public class User {
 
     @NotEmpty(message = "password is required")
     @Size(min = 8, message = "password should contain at least 8 characters")
-    @JsonIgnore
     private String password;
 
     @NotEmpty(message = "email is required")
     @Email
-    @JsonIgnore
     private String email;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
     private Set<Tweet> tweets = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "like_tweet",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -60,7 +58,6 @@ public class User {
                     referencedColumnName = "id"
             )
     )
-    @JsonIgnore
     private Set<Role> roles;
 
     public Long getId() {

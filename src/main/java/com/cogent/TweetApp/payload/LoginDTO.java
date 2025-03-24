@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
-public class LoginDto {
+public class LoginDTO {
     private String usernameOrEmail;
     private String password;
 
