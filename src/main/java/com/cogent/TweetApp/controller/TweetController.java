@@ -24,10 +24,10 @@ public class TweetController {
     private EntityToDTOMapper entityToDTOMapper;
 
     @GetMapping("/all")
-    public ResponseEntity<Page<TweetDTO>> getAllTweets(@RequestParam(defaultValue = "0") int page,
-                                                       @RequestParam(defaultValue = "5") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<Tweet> tweets = tweetService.getAllTweets(pageable);
+    public ResponseEntity<Page<TweetDTO>> getAllTweets(@RequestParam(required = false) Long lastId,
+                                                       @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(0, size, Sort.by("id").descending());
+        Page<Tweet> tweets = tweetService.getAllTweets(lastId, pageable);
         Page<TweetDTO> tweetDTOS = tweets.map(tweet -> entityToDTOMapper.toTweetDTO(tweet));
         return new ResponseEntity<>(tweetDTOS, HttpStatus.OK);
     }
@@ -41,20 +41,20 @@ public class TweetController {
 
     @GetMapping("/all/{id}/replies")
     public ResponseEntity<Page<TweetDTO>> getAllReplyTweets(@PathVariable("id") Long tweetId,
-                                                             @RequestParam(defaultValue = "0") int page,
-                                                             @RequestParam(defaultValue = "5") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<Tweet> tweets = tweetService.getAllReplyTweets(tweetId, pageable);
+                                                             @RequestParam(required = false) Long lastId,
+                                                             @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(0, size, Sort.by("id").descending());
+        Page<Tweet> tweets = tweetService.getAllReplyTweets(tweetId, lastId, pageable);
         Page<TweetDTO> tweetDTOS = tweets.map(tweet -> entityToDTOMapper.toTweetDTO(tweet));
         return new ResponseEntity<>(tweetDTOS, HttpStatus.OK);
     }
 
     @GetMapping("/{username}")
     public ResponseEntity<Page<TweetDTO>> getAllTweetsByUser(@PathVariable("username") String username,
-                                                             @RequestParam(defaultValue = "0") int page,
-                                                             @RequestParam(defaultValue = "5") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<Tweet> tweets = tweetService.getAllTweetsByUser(username, pageable);
+                                                             @RequestParam(required = false) Long lastId,
+                                                             @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(0, size, Sort.by("id").descending());
+        Page<Tweet> tweets = tweetService.getAllTweetsByUser(username, lastId, pageable);
         Page<TweetDTO> tweetDTOS = tweets.map(tweet -> entityToDTOMapper.toTweetDTO(tweet));
         return new ResponseEntity<>(tweetDTOS, HttpStatus.OK);
     }

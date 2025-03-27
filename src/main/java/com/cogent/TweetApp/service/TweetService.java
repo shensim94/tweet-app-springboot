@@ -7,11 +7,11 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface TweetService {
-    Page<Tweet> getAllTweets(Pageable pageable);
+    Page<Tweet> getAllTweets(Long lastId, Pageable pageable);
 
-    Page<Tweet> getAllTweetsByUser(String username, Pageable pageable);
+    Page<Tweet> getAllTweetsByUser(String username, Long lastId, Pageable pageable);
 
-    Page<Tweet> getAllReplyTweets(Long tweetId, Pageable pageable);
+    Page<Tweet> getAllReplyTweets(Long tweetId, Long lastId, Pageable pageable);
 
     Tweet getTweetById(Long tweetId);
 

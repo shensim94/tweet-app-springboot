@@ -62,20 +62,28 @@ public class TweetServiceImpl implements TweetService {
     }
 
     @Override
-    public Page<Tweet> getAllTweets(Pageable pageable) {
-
-        return tweetRepository.findAll(pageable);
+    public Page<Tweet> getAllTweets(Long lastId, Pageable pageable) {
+        if (lastId == null) {
+            return tweetRepository.findAll(pageable);
+        }
+        return tweetRepository.findAllByIdLessThan(lastId, pageable);
     }
 
     @Override
-    public Page<Tweet> getAllTweetsByUser(String username, Pageable pageable) {
+    public Page<Tweet> getAllTweetsByUser(String username, Long lastId, Pageable pageable) {
         User user = retrieveByUsername(username);
-        return tweetRepository.findByUserId(user.getId(), pageable);
+        if (lastId == null) {
+            return tweetRepository.findByUserId(user.getId(), pageable);
+        }
+        return tweetRepository.findByUserIdAndIdLessThan(user.getId(), lastId, pageable);
     }
 
     @Override
-    public Page<Tweet> getAllReplyTweets(Long tweetId, Pageable pageable) {
-        return tweetRepository.findByParentTweetId(tweetId, pageable);
+    public Page<Tweet> getAllReplyTweets(Long tweetId, Long lastId, Pageable pageable) {
+        if (lastId == null) {
+            return tweetRepository.findByParentTweetId(tweetId, pageable);
+        }
+        return tweetRepository.findByParentTweetIdAndIdLessThan(tweetId, lastId, pageable);
     }
 
     @Override

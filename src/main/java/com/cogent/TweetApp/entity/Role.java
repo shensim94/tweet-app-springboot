@@ -3,9 +3,10 @@ package com.cogent.TweetApp.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
-@NotEmpty
 @AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "roles")
 public class Role {
