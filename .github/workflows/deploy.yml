@@ -1,0 +1,74 @@
+name: Deploy Spring Boot to EC2
+
+on:
+  push:
+    branches:
+      - main  # or any branch you want to trigger deployments from
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml -DskipTests
+        # For Gradle, use: ./gradlew build -x test
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPO }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPO }}:${{ github.sha }}
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Login to DockerHub from EC2 instance
+            echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+            
+            # Pull the latest image
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPO }}:latest
+            
+            # Stop and remove the current container if it exists
+            docker stop spring-app || true
+            docker rm spring-app || true
+            
+            # Run the new container
+            docker run -d \
+              --name twiddir-app \
+              --restart unless-stopped \
+              -p 80:8080 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e SPRING_DATASOURCE_URL=${{ secrets.DATABASE_URL }} \
+              -e SPRING_DATASOURCE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
+              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+              -e APP_ENV=production \
+              -e SERVER_PORT=8080 \
+              -e LOGGING_LEVEL_ROOT=INFO \
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPO }}:latest
+            
+            # Clean up old images (optional)
+            docker system prune -af
