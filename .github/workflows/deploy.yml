@@ -56,9 +56,13 @@ jobs:
             docker stop twiddir-app || true
             docker rm twiddir-app || true
             
+            # Create a network if it doesn't exist
+            docker network create app-network || true
+            
             # Run the new container
             docker run -d \
               --name twiddir-app \
+              --network app-network \
               --restart unless-stopped \
               -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
