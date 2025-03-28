@@ -53,14 +53,14 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPO }}:latest
             
             # Stop and remove the current container if it exists
-            docker stop spring-app || true
-            docker rm spring-app || true
+            docker stop twiddir-app || true
+            docker rm twiddir-app || true
             
             # Run the new container
             docker run -d \
               --name twiddir-app \
               --restart unless-stopped \
-              -p 80:8080 \
+              -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e SPRING_DATASOURCE_URL=${{ secrets.DATABASE_URL }} \
               -e SPRING_DATASOURCE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
